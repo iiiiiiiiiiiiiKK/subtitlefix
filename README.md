@@ -12,7 +12,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178c6.svg)](https://www.typescriptlang.org/)
 [![Tests](https://img.shields.io/badge/tests-148%20unit%20%2B%2020%20e2e-34d399.svg)](#测试)
 
-**[▶ 在线使用](https://iiiiiiiiiiiiiKK.github.io/subtitlefix/)** · **[作者 𝕏 @0xkillcoin](https://x.com/0xkillcoin)**
+**[▶ 在线使用](https://iiiiiiiiiiiiikk.github.io/subtitlefix/)** · **[作者 𝕏 @0xkillcoin](https://x.com/0xkillcoin)**
 
 <sub>Built by [0xkillcoin](https://x.com/0xkillcoin)</sub>
 
@@ -274,8 +274,15 @@ npm run e2e
 | `node scripts/screenshots.mjs` | 对生产构建自动截图（README 里的图就是它生成的） |
 | `node scripts/layout-audit.mjs` | 9 种视口（1920 → 360、横屏手机、iPad mini）逐个检查横向溢出、CTA 是否被裁、面板可见性、对话框是否越界、控制台报错 |
 | `node scripts/privacy-audit.mjs` | 记录页面加载完成后的**所有**网络请求与 WebSocket，跑完整套核心流程后断言为 0 |
+| `node scripts/verify-production.mjs <url>` | 对**线上部署**跑真实用户流程（桌面 + iPhone），断言下载文件的实际字节 |
 
-三个脚本都需要先启动 `npm run preview`，默认连 `http://127.0.0.1:4899`（可用 `SHOT_BASE` 覆盖）。
+前三个脚本需要先启动 `npm run preview`，默认连 `http://127.0.0.1:4899`（可用 `SHOT_BASE` 覆盖）。
+`verify-production.mjs` 直接打线上地址：
+
+```bash
+node scripts/verify-production.mjs https://iiiiiiiiiiiiikk.github.io/subtitlefix/
+# 30/30 checks passed
+```
 
 ### 隐私验证
 
@@ -297,11 +304,13 @@ PASS: zero network requests after the initial load.
 
 ### GitHub Pages（当前使用）
 
+线上地址：**https://iiiiiiiiiiiiikk.github.io/subtitlefix/**
+
 仓库已包含 `.github/workflows/deploy-pages.yml`：推送到 `main` 后自动构建并发布 `dist/`。
 
-1. 仓库 **Settings → Pages → Source** 选择 **GitHub Actions**（只需配置一次）。
+1. 仓库 **Settings → Pages → Source** 选择 **GitHub Actions**（本仓库已配置为 `build_type: workflow`）。
 2. push 到 `main`，或手动触发 *Deploy to GitHub Pages* workflow。
-3. 访问 `https://iiiiiiiiiiiiiKK.github.io/subtitlefix/`。
+3. 访问 `https://iiiiiiiiiiiiikk.github.io/subtitlefix/`。
 
 `vite.config.ts` 里 `base: './'` 是相对路径，因此放在用户主页根目录、项目子路径、或任意静态托管上都能直接工作。
 
