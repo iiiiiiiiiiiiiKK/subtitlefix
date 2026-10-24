@@ -1,0 +1,15 @@
+1
+00:00:01,000 --> 00:00:04,000
+Hello and welcome to the SubtitleFix workshop.
+
+2
+00:00:04,000 --> 00:00:07,500
+Everything runs inside your browser tab.
+
+3
+00:00:07,500 --> 00:00:11,000
+No file ever leaves your machine.
+
+4
+00:00:11,000 --> 00:00:14,000
+Drop a subtitle file to begin.

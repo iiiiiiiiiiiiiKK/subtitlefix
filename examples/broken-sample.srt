@@ -1,0 +1,41 @@
+1
+00:00:01,000 --> 00:00:03,500
+欢迎来到字幕修理厂。这里是第一条字幕。
+Welcome to SubtitleFix — this is the first cue.
+
+2
+00:00:03,200 --> 00:00:06,000
+这条字幕和上一条重叠了 300 毫秒。
+This cue overlaps the previous one by 300ms.
+
+3
+00:00:08,000 --> 00:00:05,000
+这条字幕的开始时间晚于结束时间（需要修复）。
+This cue starts after it ends and needs repair.
+
+4
+00:00:10,000 --> 00:00:12,000
+
+
+5
+00:00:14.000 --> 00:00:16.000
+时间轴用了点号而不是逗号（WebVTT 风格混入 SRT）。
+A dot was used instead of a comma.
+
+7
+00:00:18,000 --> 00:00:20,000
+编号跳过了 6。
+
+8
+00:00:19,500 --> 00:00:22,000
+这条又和上一条重叠，而且下面缺少空行。
+Overlapping again, with a missing blank line below.
+9
+00:00:24,000 --> 00:00:26,500
+上一行和这一行之间没有空行，但正文没有丢。
+No blank line before this cue, but the text survived.
+
+10
+00:00:28,000 --> 00:00:30,000
+带有 ASS 样式标签的正文。
+{\i1}Italic tag from an ASS file{\i0}

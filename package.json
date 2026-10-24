@@ -1,0 +1,69 @@
+{
+  "name": "subtitlefix",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "SubtitleFix - 字幕修理厂: a private, browser-local subtitle workbench for SRT/WebVTT repair, editing and conversion.",
+  "author": "0xkillcoin",
+  "license": "MIT",
+  "homepage": "https://github.com/iiiiiiiiiiiiiKK/subtitlefix",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iiiiiiiiiiiiiKK/subtitlefix.git"
+  },
+  "bugs": {
+    "url": "https://github.com/iiiiiiiiiiiiiKK/subtitlefix/issues"
+  },
+  "keywords": [
+    "subtitles",
+    "srt",
+    "vtt",
+    "webvtt",
+    "subtitle-editor",
+    "subtitle-converter",
+    "bilingual-subtitles",
+    "timeline",
+    "privacy",
+    "offline",
+    "react",
+    "typescript"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --port 4173 --host",
+    "typecheck": "tsc -b",
+    "lint": "eslint . --max-warnings 0",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "check": "npm run lint && npm run typecheck && npm run test && npm run build"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.18.0",
+    "@playwright/test": "^1.49.1",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/node": "^22.10.5",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "^5.0.5",
+    "eslint": "^9.18.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "globals": "^15.14.0",
+    "jsdom": "^25.0.1",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.20.0",
+    "vite": "^6.0.7",
+    "vitest": "^5.0.5"
+  }
+}

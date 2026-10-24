@@ -1,0 +1,26 @@
+WEBVTT - SubtitleFix 示例文件
+Kind: captions
+Language: zh-CN
+
+NOTE
+这个 NOTE 块会在导出时原样保留。
+
+STYLE
+::cue { color: #f8fafc; background-color: rgba(15, 23, 42, 0.75); }
+
+REGION
+id:bottom width:80% lines:3 regionanchor:50%,100% viewportanchor:50%,95%
+
+00:00:01.000 --> 00:00:04.000 align:start position:10%
+干净的 WebVTT 示例。
+<style>标签</style> 与实体 &amp; 都会原样保留。
+
+00:00:04.500 --> 00:00:08.000
+第二条字幕，演示 cue 设置。
+
+id-cue-3
+00:00:09.000 --> 00:00:12.000 line:90%
+带命名标识的 cue，导出时会保留标识。
+
+00:00:13.000 --> 00:00:15.000
+最后一条，正文里有 emoji 🎬 与中文标点：，。！？

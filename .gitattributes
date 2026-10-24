@@ -1,0 +1,8 @@
+# Normalise line endings in the repository; SRT/VTT fixtures stay LF so the
+# round-trip tests behave identically on Windows, macOS and CI.
+* text=auto eol=lf
+
+*.srt text eol=lf
+*.vtt text eol=lf
+*.png binary
+*.jpg binary
