@@ -1,7 +1,12 @@
 /**
  * Small built-in sample files so the workbench has an instant "try it" path.
  * They are intentionally messy — each one demonstrates real repair scenarios.
+ *
+ * The `demo-walkthrough` sample is the one the guided tour uses; it is defined
+ * in `demo.ts` so the fixture, the tour script and the tests cannot drift apart.
  */
+
+import { DEMO_FILE_NAME, DEMO_SRT } from './demo';
 
 export interface SampleFile {
   id: string;
@@ -115,8 +120,15 @@ id-cue-3
 
 export const SAMPLES: SampleFile[] = [
   {
+    id: 'demo-walkthrough',
+    label: '演示字幕（推荐）',
+    description: '5 种真实故障，每条正文都在解释自己的毛病',
+    fileName: DEMO_FILE_NAME,
+    content: DEMO_SRT,
+  },
+  {
     id: 'broken-srt',
-    label: '破损 SRT（推荐）',
+    label: '破损 SRT（旧）',
     description: '重叠 / 逆序 / 空字幕 / 点号时间 / 编号跳号 / 缺空行 / ASS 标签',
     fileName: 'broken-sample.srt',
     content: BROKEN_SRT,

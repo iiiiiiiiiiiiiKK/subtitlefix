@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BilingualDialog } from './components/BilingualDialog';
 import { CueList } from './components/CueList';
+import { DemoTour, DemoConfirm } from './components/DemoTour';
 import { EditorPanel } from './components/EditorPanel';
 import { ExportDialog } from './components/ExportDialog';
 import { IssuePanel } from './components/IssuePanel';
@@ -10,7 +11,16 @@ import { ShortcutsDialog } from './components/ShortcutsDialog';
 import { Toasts } from './components/Toasts';
 import { Toolbar } from './components/Toolbar';
 import { TopBar } from './components/TopBar';
-import { IconShield, IconUpload } from './components/icons';
+import { IconPlay, IconShield, IconUpload } from './components/icons';
+import {
+  DEMO_FILE_NAME,
+  DEMO_SRT,
+  DEMO_TITLE,
+  TOUR_STEPS,
+  hasSeenTour,
+  markTourSeen,
+  type DemoTab,
+} from './core/demo';
 import { applyFix, searchCues } from './core/ops';
 import { suggestedFileName } from './core/serialize';
 import type { Doc, FixId, Issue, SubtitleFormat } from './core/types';
@@ -18,6 +28,7 @@ import { copyToClipboard, downloadText, isSubtitleFileName, readTextFile } from 
 import { useTheme } from './lib/useTheme';
 import { useSubtitleStore } from './state/useSubtitleStore';
 import './styles/app.css';
+import './styles/tour.css';
 
 /** Files above this size are parsed in a Web Worker to keep the UI responsive. */
 const WORKER_THRESHOLD_BYTES = 220_000;
@@ -39,6 +50,12 @@ export default function App() {
   const [dragActive, setDragActive] = useState(false);
   const [busyMessage, setBusyMessage] = useState<string | null>(null);
   const [activeQuery, setActiveQuery] = useState('');
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourStep, setTourStep] = useState(0);
+  /** Set when the tour hands control to the export dialog and must resume after. */
+  const [resumeTourAt, setResumeTourAt] = useState<number | null>(null);
+  /** Non-null when the user asked for the demo while their own file was open. */
+  const [demoConfirmOpen, setDemoConfirmOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragDepth = useRef(0);
 
@@ -300,6 +317,105 @@ export default function App() {
     store.insertCue(start, start + 2000);
   }, [store]);
 
+  // ------------------------------------------------------------- guided demo
+  const startTour = useCallback(
+    (fromStep = 0) => {
+      // The demo loads its own document, which replaces the undo history. Never
+      // do that silently while the user has their own file open.
+      const ownWork = store.doc.cues.length > 0 && store.doc.meta.fileName !== DEMO_FILE_NAME;
+      if (fromStep === 0 && ownWork) {
+        setDemoConfirmOpen(true);
+        return;
+      }
+      setResumeTourAt(null);
+      setTourStep(fromStep);
+      setTourOpen(true);
+    },
+    [store.doc.cues.length, store.doc.meta.fileName],
+  );
+
+  const finishTour = useCallback(() => {
+    setTourOpen(false);
+    setResumeTourAt(null);
+    markTourSeen();
+    store.toast('info', '演示结束。把你的 .srt / .vtt 拖进窗口就能开始；想再看一次点工具栏的「演示」。');
+  }, [store]);
+
+  const skipTour = useCallback(() => {
+    setTourOpen(false);
+    setResumeTourAt(null);
+    markTourSeen();
+  }, []);
+
+  const nextTourStep = useCallback(() => {
+    setTourStep((step) => Math.min(step + 1, TOUR_STEPS.length - 1));
+  }, []);
+
+  const prevTourStep = useCallback(() => {
+    setTourStep((step) => Math.max(step - 1, 0));
+  }, []);
+
+  /**
+   * Side effect of a tour step. The step that opens the export dialog hands over
+   * to that dialog (it is modal), then the tour resumes at `resumeTourAt`.
+   */
+  const runTourAction = useCallback(
+    (index: number) => {
+      const step = TOUR_STEPS[index];
+      if (!step) return;
+      switch (step.action) {
+        case 'load-demo':
+          store.loadFromText(DEMO_SRT, {
+            fileName: DEMO_FILE_NAME,
+            source: 'sample',
+            title: DEMO_TITLE,
+          });
+          setMobileView('list');
+          break;
+        case 'fix-swap':
+          store.applyFixAction('swap-times');
+          break;
+        case 'fix-overlap':
+          store.runTrimOverlaps();
+          break;
+        case 'fix-all':
+          fixAll();
+          break;
+        case 'open-export':
+          setTourOpen(false);
+          setExportOpen(true);
+          setResumeTourAt(TOUR_STEPS.length - 1);
+          break;
+        default:
+          break;
+      }
+    },
+    [store, fixAll],
+  );
+
+  const showTourTab = useCallback((tab: DemoTab) => {
+    setMobileView(tab);
+  }, []);
+
+  const closeExport = useCallback(() => {
+    setExportOpen(false);
+    if (resumeTourAt !== null) {
+      setTourStep(resumeTourAt);
+      setTourOpen(true);
+      setResumeTourAt(null);
+    }
+  }, [resumeTourAt]);
+
+  // First visit: open the demo automatically, but only once per browser.
+  useEffect(() => {
+    if (hasSeenTour()) return;
+    const timer = window.setTimeout(() => {
+      setTourStep(0);
+      setTourOpen(true);
+    }, 800);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   // ------------------------------------------------------------------- drag
   useEffect(() => {
     const onDragEnter = (event: DragEvent) => {
@@ -369,6 +485,7 @@ export default function App() {
         onExport={() => setExportOpen(true)}
         onUndo={store.undo}
         onRedo={store.redo}
+        onDemo={() => startTour(0)}
       />
 
       <input
@@ -443,6 +560,7 @@ export default function App() {
           <EmptyState
             onImport={() => fileInputRef.current?.click()}
             onPaste={() => setPasteOpen(true)}
+            onDemo={() => startTour(0)}
             onSample={(id) => {
               const sample = loadSampleText(id);
               if (sample) importText(sample.text, sample.fileName);
@@ -530,12 +648,34 @@ export default function App() {
         open={exportOpen}
         doc={store.doc}
         diff={store.diff}
-        onClose={() => setExportOpen(false)}
+        onClose={closeExport}
         onExport={doExport}
         suggestedName={(format) => suggestedFileName(store.doc, format)}
       />
 
       <ShortcutsDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
+
+      <DemoTour
+        open={tourOpen}
+        step={tourStep}
+        onRunAction={runTourAction}
+        onNext={nextTourStep}
+        onPrev={prevTourStep}
+        onFinish={finishTour}
+        onSkip={skipTour}
+        onShowTab={showTourTab}
+      />
+
+      <DemoConfirm
+        open={demoConfirmOpen}
+        onCancel={() => setDemoConfirmOpen(false)}
+        onConfirm={() => {
+          setDemoConfirmOpen(false);
+          setResumeTourAt(null);
+          setTourStep(0);
+          setTourOpen(true);
+        }}
+      />
 
       <Toasts toasts={store.toasts} onDismiss={store.dismissToast} />
 
@@ -566,35 +706,52 @@ interface EmptyStateProps {
   onImport: () => void;
   onPaste: () => void;
   onSample: (id: string) => void;
+  onDemo: () => void;
 }
 
-function EmptyState({ onImport, onPaste, onSample }: EmptyStateProps) {
+function EmptyState({ onImport, onPaste, onSample, onDemo }: EmptyStateProps) {
   return (
     <section className="empty" aria-label="开始使用">
       <div className="empty__hero">
+        <p className="empty__eyebrow">字幕时间对不上？先看清楚问题在哪</p>
         <h2 className="empty__title">
-          打开字幕文件，开始修理 <span className="empty__accent">字幕</span>
+          把一份坏掉的字幕，
+          <br className="empty__br" />
+          当场<span className="empty__accent">修好</span>
         </h2>
         <p className="empty__lede">
-          解析、校验、修复时间轴、双语合并、SRT ⇄ WebVTT 转换 —— 全部在你的浏览器里完成，字幕内容不会上传到任何服务器。
+          字幕最常见的三种毛病：<strong>时间轴错位</strong>（整体快/慢几秒）、
+          <strong>条目重叠或倒序</strong>（播放器闪字幕甚至跳过）、<strong>格式不兼容</strong>
+          （SRT 与 WebVTT 互转时丢内容）。这个工具把它们一条条找出来、修好，并在导出前告诉你改了什么。
         </p>
+
         <div className="empty__actions">
-          <button type="button" className="btn btn--primary empty__cta" onClick={onImport} data-testid="empty-import">
+          <button
+            type="button"
+            className="btn btn--primary empty__cta"
+            onClick={onDemo}
+            data-testid="empty-demo"
+          >
+            <IconPlay size={16} /> 看 3 分钟演示（推荐）
+          </button>
+          <button type="button" className="btn empty__cta" onClick={onImport} data-testid="empty-import">
             <IconUpload size={16} /> 选择字幕文件
           </button>
           <button type="button" className="btn empty__cta" onClick={onPaste}>
             粘贴字幕文本
           </button>
         </div>
-        <p className="empty__hint dim">也可以直接把文件拖进窗口</p>
+        <p className="empty__hint dim">
+          演示会载入一份<strong>故意弄坏</strong>的示例字幕并现场把它修好；也可以直接把 .srt / .vtt 拖进窗口。
+        </p>
       </div>
 
       <div className="empty__samples">
-        <h3 className="empty__samples-title">试试示例</h3>
+        <h3 className="empty__samples-title">或者直接试这些示例</h3>
         <div className="empty__sample-grid">
-          <button type="button" className="empty__sample" onClick={() => onSample('broken-srt')}>
-            <span className="empty__sample-name">破损 SRT</span>
-            <span className="empty__sample-desc">重叠 / 逆序 / 空字幕 / 缺空行，一次看到所有检测能力</span>
+          <button type="button" className="empty__sample" onClick={() => onSample('demo-walkthrough')}>
+            <span className="empty__sample-name">演示字幕（5 种故障）</span>
+            <span className="empty__sample-desc">重叠 / 倒序 / 空字幕 / 编号断档 / 缺空行</span>
           </button>
           <button type="button" className="empty__sample" onClick={() => onSample('clean-vtt')}>
             <span className="empty__sample-name">WebVTT 示例</span>

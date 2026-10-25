@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { IconArrowLeft, IconArrowRight, IconClock, IconCopy, IconDownload, IconLanguages, IconMerge, IconPaste, IconRedo, IconSearch, IconSplit, IconTrash, IconUndo, IconUpload, IconWand } from './icons';
+import { IconArrowLeft, IconArrowRight, IconClock, IconCopy, IconDownload, IconLanguages, IconMerge, IconPaste, IconPlay, IconRedo, IconSearch, IconSplit, IconTrash, IconUndo, IconUpload, IconWand } from './icons';
 
 export interface ToolbarProps {
   canUndo: boolean;
@@ -8,6 +8,7 @@ export interface ToolbarProps {
   selectedCount: number;
   disabled?: boolean;
   onImportFile: () => void;
+  onDemo: () => void;
   onPaste: () => void;
   onSearch: () => void;
   onBilingual: () => void;
@@ -52,6 +53,15 @@ export function Toolbar(props: ToolbarProps) {
       <div className="toolbar__group">
         <button type="button" className="btn" onClick={props.onImportFile} data-testid="btn-import">
           <IconUpload size={16} /> 导入
+        </button>
+        <button
+          type="button"
+          className="btn btn--demo"
+          onClick={props.onDemo}
+          title="用一个故意弄坏的示例字幕，走一遍完整修复流程"
+          data-testid="btn-demo"
+        >
+          <IconPlay size={15} /> 演示
         </button>
         <button type="button" className="btn" onClick={props.onPaste}>
           <IconPaste size={16} /> 粘贴

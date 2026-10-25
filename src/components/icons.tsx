@@ -233,3 +233,11 @@ export function IconCode({ size = 18, className }: IconProps) {
     </svg>
   );
 }
+
+export function IconPlay({ size = 18, className }: IconProps) {
+  return (
+    <svg {...base(size)} className={className}>
+      <path d="M7 4.5v15l12.5-7.5L7 4.5Z" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}

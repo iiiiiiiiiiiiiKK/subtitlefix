@@ -13,6 +13,9 @@ const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
 const page = await ctx.newPage();
 
+// Suppress the first-visit tour so the scripted clicks hit the workspace.
+await ctx.addInitScript(() => window.localStorage.setItem('subtitlefix.tour.seen.v1', '1'));
+
 const requestsAfterLoad = [];
 let loaded = false;
 page.on('request', (req) => {
@@ -27,7 +30,7 @@ await page.waitForTimeout(600);
 loaded = true;
 
 // Exercise the main flows that could plausibly phone home.
-await page.getByRole('button', { name: /破损 SRT/ }).first().click();
+await page.getByRole('button', { name: /演示字幕/ }).first().click();
 await page.waitForTimeout(300);
 await page.getByTestId('cue-row-1').click();
 await page.getByTestId('input-cue-text').fill('隐私测试：这段文字不应出现在任何网络请求中。');

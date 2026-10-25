@@ -31,6 +31,9 @@ const browser = await chromium.launch();
 // ---------------------------------------------------------------- desktop ---
 {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
+  // Suppress the first-visit tour so the scripted flow hits the workspace; the
+  // tour gets its own dedicated check further down.
+  await ctx.addInitScript(() => window.localStorage.setItem('subtitlefix.tour.seen.v1', '1'));
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -120,6 +123,7 @@ const browser = await chromium.launch();
 // ------------------------------------------------------------------ iPhone ---
 {
   const ctx = await browser.newContext({ ...devices['iPhone 13'], acceptDownloads: true });
+  await ctx.addInitScript(() => window.localStorage.setItem('subtitlefix.tour.seen.v1', '1'));
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -137,7 +141,7 @@ const browser = await chromium.launch();
     JSON.stringify(xBox),
   );
 
-  await page.getByRole('button', { name: /破损 SRT/ }).first().click();
+  await page.getByRole('button', { name: /演示字幕/ }).first().click();
   await page.waitForTimeout(500);
   record('single-column list pane on iPhone', await page.getByTestId('cue-list').isVisible());
   record('editor hidden until a cue is tapped', !(await page.getByTestId('editor-panel').isVisible()));
@@ -168,6 +172,40 @@ const browser = await chromium.launch();
   record('export works on iPhone', out.text.includes('iPhone 端编辑验证'));
 
   record('no page errors on iPhone', errors.length === 0, errors.slice(0, 3).join(' | '));
+  await ctx.close();
+}
+
+// ------------------------------------------------------ first-visit demo tour ---
+{
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  // Fresh browser state: no `tour.seen` flag, i.e. a real first-time visitor.
+  const page = await ctx.newPage();
+  await page.goto(BASE, { waitUntil: 'networkidle' });
+
+  const tour = page.getByTestId('demo-tour');
+  await tour.waitFor({ timeout: 8000 }).catch(() => {});
+  record('guided demo opens for a first-time visitor', await tour.isVisible());
+
+  if (await tour.isVisible()) {
+    const title = page.getByTestId('demo-tour-title');
+    record('demo explains what the tool does', /3 分钟/.test((await title.textContent()) ?? ''));
+
+    const next = page.getByTestId('demo-tour-next');
+    await next.click(); // load the demo document
+    await page.waitForTimeout(500);
+    record('demo loads an 8-cue sample file', (await page.getByTestId('cue-row-8').count()) === 1);
+
+    // Walk to the end: 6 more clicks (steps 1..6), then the export dialog opens.
+    for (let i = 0; i < 5; i += 1) {
+      await next.click();
+      await page.waitForTimeout(350);
+    }
+    record('demo reaches the export step', await page.getByTestId('export-dialog').isVisible());
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(400);
+    record('demo resumes after the export dialog', await tour.isVisible());
+  }
+
   await ctx.close();
 }
 

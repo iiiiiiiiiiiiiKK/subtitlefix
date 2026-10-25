@@ -24,6 +24,8 @@ const VIEWPORTS = [
 
 const problems = [];
 
+const TOUR_SEEN_KEY = 'subtitlefix.tour.seen.v1';
+
 function check(name, condition, detail) {
   if (!condition) problems.push(`${name}: ${detail}`);
 }
@@ -38,6 +40,8 @@ for (const vp of VIEWPORTS) {
     deviceScaleFactor: 1,
     colorScheme: 'dark',
   });
+  // Suppress the first-visit tour so this audit measures the workspace itself.
+  await ctx.addInitScript((key) => window.localStorage.setItem(key, '1'), TOUR_SEEN_KEY);
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (err) => errors.push(err.message));
@@ -77,7 +81,7 @@ for (const vp of VIEWPORTS) {
   check(vp.name, ctaBox !== null && ctaBox.height >= 32, 'primary CTA too small for touch');
 
   // --- loaded workbench ----------------------------------------------------
-  await page.getByRole('button', { name: /破损 SRT/ }).first().click();
+  await page.getByRole('button', { name: /演示字幕/ }).first().click();
   await page.waitForTimeout(350);
 
   const overflowLoaded = await page.evaluate(

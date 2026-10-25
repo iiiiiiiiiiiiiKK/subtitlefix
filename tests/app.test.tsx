@@ -1,7 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { act } from 'react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import App from '../src/App';
+import { TOUR_SEEN_KEY } from '../src/core/demo';
 import { resetCueIds } from '../src/core/ids';
 
 const SRT = `1
@@ -29,6 +31,8 @@ beforeEach(() => {
   resetCueIds();
   try {
     localStorage.clear();
+    // Suppress the first-visit demo tour; it has its own test below.
+    localStorage.setItem(TOUR_SEEN_KEY, '1');
   } catch {
     /* ignore */
   }
@@ -121,5 +125,60 @@ describe('<App /> integration', () => {
     expect(document.documentElement.dataset.theme).toBe('light');
     await user.click(screen.getByRole('button', { name: /切换到深色模式/ }));
     expect(document.documentElement.dataset.theme).toBe('dark');
+  });
+});
+
+describe('<App /> guided demo', () => {
+  async function renderFirstVisit() {
+    localStorage.removeItem(TOUR_SEEN_KEY);
+    const user = userEvent.setup();
+    render(<App />);
+    // The tour auto-opens on a timer; flush it.
+    await act(async () => {
+      await new Promise((resolve) => window.setTimeout(resolve, 950));
+    });
+    return user;
+  }
+
+  it('opens by itself for a first-time visitor and can be skipped', async () => {
+    const user = await renderFirstVisit();
+    expect(await screen.findByTestId('demo-tour')).toBeInTheDocument();
+    expect(screen.getByTestId('demo-tour-title')).toHaveTextContent('3 分钟');
+
+    await user.click(screen.getByRole('button', { name: '跳过演示' }));
+    expect(screen.queryByTestId('demo-tour')).not.toBeInTheDocument();
+    expect(localStorage.getItem(TOUR_SEEN_KEY)).toBe('1');
+  });
+
+  it('loads the demo file and repairs the reversed cue when advancing', async () => {
+    const user = await renderFirstVisit();
+    const next = await screen.findByTestId('demo-tour-next');
+
+    // Step 0 -> 1: load the demo document.
+    await user.click(next);
+    expect(await screen.findByTestId('cue-row-1')).toBeInTheDocument();
+    expect(screen.getByTestId('cue-list')).toHaveTextContent('故意弄坏');
+
+    // Advance until the "fix reversed timing" step, which applies the repair.
+    for (let guard = 0; guard < 6; guard += 1) {
+      if (/时间倒序/.test(screen.getByTestId('demo-tour-title').textContent ?? '')) break;
+      await user.click(screen.getByTestId('demo-tour-next'));
+    }
+    expect(screen.getByTestId('demo-tour-title')).toHaveTextContent('时间倒序');
+
+    expect(await screen.findByTestId('demo-tour-did')).toHaveTextContent('交换');
+    const issueList = screen.getByTestId('issue-list');
+    expect(issueList).not.toHaveTextContent('开始时间晚于结束时间');
+  });
+
+  it('can be restarted from the toolbar', async () => {
+    const user = await renderApp();
+    await user.click(screen.getByTestId('btn-demo'));
+    expect(await screen.findByTestId('demo-tour')).toBeInTheDocument();
+  });
+
+  it('the landing page leads with the demo CTA', async () => {
+    await renderApp();
+    expect(screen.getByTestId('empty-demo')).toHaveTextContent('演示');
   });
 });

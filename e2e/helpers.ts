@@ -23,9 +23,30 @@ export const SAMPLE_SRT = `1
 最后一条。
 `;
 
-export async function gotoApp(page: Page) {
+/**
+ * The guided demo auto-opens on a first visit. Every test that is *not* about the
+ * tour marks it as seen before the app boots, so it gets a clean workspace.
+ */
+export const TOUR_SEEN_KEY = 'subtitlefix.tour.seen.v1';
+
+export async function gotoApp(page: Page, options: { keepTour?: boolean } = {}) {
+  if (options.keepTour) {
+    // Clear the flag only once per tab: the marker lives in sessionStorage, which
+    // survives reloads, so `page.reload()` does not resurrect the tour.
+    await page.addInitScript((key) => {
+      const marker = '__subtitlefix_tour_reset__';
+      if (window.sessionStorage.getItem(marker)) return;
+      window.sessionStorage.setItem(marker, '1');
+      window.localStorage.removeItem(key);
+    }, TOUR_SEEN_KEY);
+  } else {
+    await page.addInitScript((key) => window.localStorage.setItem(key, '1'), TOUR_SEEN_KEY);
+  }
   await page.goto('/');
   await expect(page.getByRole('heading', { name: /SubtitleFix/ })).toBeVisible();
+  if (!options.keepTour) {
+    await expect(page.getByTestId('demo-tour')).toHaveCount(0);
+  }
 }
 
 export async function loadViaPaste(page: Page, text: string) {
@@ -37,8 +58,9 @@ export async function loadViaPaste(page: Page, text: string) {
   await expect(dialog).toBeHidden();
 }
 
+/** Loads the bundled demo subtitles without running the tour. */
 export async function loadSample(page: Page) {
-  await page.getByRole('button', { name: /破损 SRT/ }).first().click();
+  await page.getByRole('button', { name: /演示字幕/ }).first().click();
   await expect(page.getByTestId('cue-row-1')).toBeVisible();
 }
 

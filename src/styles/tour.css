@@ -1,0 +1,242 @@
+/* ==========================================================================
+   Guided demo tour (coach marks)
+   ========================================================================== */
+
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  pointer-events: none;
+}
+
+.tour__scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.55);
+  backdrop-filter: blur(1.5px);
+  /* The tour is a guide, not a modal trap: the page behind it stays usable so
+     people can click around and see the highlighted thing for real. */
+  pointer-events: none;
+}
+
+/* The spotlight keeps its centre transparent and paints the dimming with a
+   huge outer box-shadow, so the highlighted element stays interactive. */
+.tour__spotlight {
+  position: absolute;
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 0 0 9999px rgba(3, 7, 18, 0.66);
+  transition: all 0.22s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tour__card {
+  position: fixed;
+  pointer-events: auto;
+  z-index: 2;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 14px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  animation: tour-in 0.18s ease-out;
+}
+
+@keyframes tour-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tour__card--centered {
+  width: min(430px, calc(100vw - 28px));
+}
+
+.tour__card--centered[style*='translate(-50%, -50%)'] {
+  animation: tour-in-center 0.18s ease-out;
+}
+
+@keyframes tour-in-center {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 8px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.tour__progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--surface-3);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  overflow: hidden;
+}
+
+.tour__progress > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--info));
+  transition: width 0.25s ease;
+}
+
+.tour__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tour__badge {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.tour__title {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+}
+
+.tour__body {
+  margin: 0;
+  font-size: 12.8px;
+  line-height: 1.68;
+  color: var(--text-muted);
+}
+
+.tour__did {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ok);
+  background: var(--ok-soft);
+  border: 1px solid color-mix(in srgb, var(--ok) 30%, transparent);
+  border-radius: var(--radius-sm);
+  padding: 7px 9px;
+}
+
+.tour__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+  padding-top: 9px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.tour__nav {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.tour__confirm-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* Toolbar "演示" button — reads as a secondary but inviting action. */
+.btn--demo {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 650;
+}
+
+.btn--demo:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 20%, var(--surface-2));
+  border-color: var(--accent);
+}
+
+/* Empty-state eyebrow + tighter headline */
+.empty__eyebrow {
+  margin: 0 0 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.empty__br {
+  display: none;
+}
+
+@media (min-width: 620px) {
+  .empty__br {
+    display: block;
+  }
+}
+
+@media (max-width: 760px) {
+  :root {
+    --topbar-h: 54px;
+  }
+
+  .tour__card {
+    padding: 13px 14px 11px;
+    max-height: 58vh;
+  }
+
+  .tour__title {
+    font-size: 14.5px;
+  }
+
+  .tour__body {
+    font-size: 12.5px;
+  }
+
+  .tour__foot {
+    gap: 6px;
+  }
+
+  .tour__nav {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour__spotlight,
+  .tour__progress > span {
+    transition: none;
+  }
+}

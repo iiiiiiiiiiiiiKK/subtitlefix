@@ -15,6 +15,9 @@ const DARK = { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2, col
 const LIGHT = { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2, colorScheme: 'light' };
 const PHONE = { ...devices['iPhone 13'], deviceScaleFactor: 2, colorScheme: 'dark' };
 
+/** Marks the guided tour as already seen unless a shot explicitly wants it. */
+const TOUR_SEEN_KEY = 'subtitlefix.tour.seen.v1';
+
 const BILINGUAL_PASTE = `1
 00:00:01,200 --> 00:00:03,300
 Welcome to SubtitleFix.
@@ -36,8 +39,20 @@ An empty cue.
 A dot was used instead of a comma.
 `;
 
+async function newPage(browser, contextOptions, { keepTour = false } = {}) {
+  const ctx = await browser.newContext(contextOptions);
+  if (!keepTour) {
+    await ctx.addInitScript((key) => window.localStorage.setItem(key, '1'), TOUR_SEEN_KEY);
+  } else {
+    await ctx.addInitScript((key) => window.localStorage.removeItem(key), TOUR_SEEN_KEY);
+  }
+  const page = await ctx.newPage();
+  await page.goto(BASE, { waitUntil: 'networkidle' });
+  return { ctx, page };
+}
+
 async function loadSample(page) {
-  await page.getByRole('button', { name: /破损 SRT/ }).first().click();
+  await page.getByRole('button', { name: /演示字幕/ }).first().click();
   await page.waitForTimeout(500);
 }
 
@@ -45,9 +60,7 @@ const browser = await chromium.launch();
 
 // 1 — empty landing (dark)
 {
-  const ctx = await browser.newContext(DARK);
-  const page = await ctx.newPage();
-  await page.goto(BASE, { waitUntil: 'networkidle' });
+  const { ctx, page } = await newPage(browser, DARK);
   await page.waitForTimeout(400);
   await page.screenshot({ path: `${OUT}/01-landing.png` });
   await ctx.close();
@@ -55,9 +68,7 @@ const browser = await chromium.launch();
 
 // 2 — workbench with problems (dark, desktop)
 {
-  const ctx = await browser.newContext(DARK);
-  const page = await ctx.newPage();
-  await page.goto(BASE, { waitUntil: 'networkidle' });
+  const { ctx, page } = await newPage(browser, DARK);
   await loadSample(page);
   await page.getByTestId('cue-row-2').click();
   await page.waitForTimeout(400);
@@ -67,9 +78,7 @@ const browser = await chromium.launch();
 
 // 3 — light theme
 {
-  const ctx = await browser.newContext(LIGHT);
-  const page = await ctx.newPage();
-  await page.goto(BASE, { waitUntil: 'networkidle' });
+  const { ctx, page } = await newPage(browser, LIGHT);
   await loadSample(page);
   await page.getByTestId('cue-row-1').click();
   await page.waitForTimeout(400);
@@ -79,9 +88,7 @@ const browser = await chromium.launch();
 
 // 4 — search & replace preview
 {
-  const ctx = await browser.newContext(DARK);
-  const page = await ctx.newPage();
-  await page.goto(BASE, { waitUntil: 'networkidle' });
+  const { ctx, page } = await newPage(browser, DARK);
   await loadSample(page);
   await page.getByTestId('btn-search').click();
   await page.getByRole('tab', { name: '批量替换' }).click();
@@ -94,9 +101,7 @@ const browser = await chromium.launch();
 
 // 5 — export dialog with diff
 {
-  const ctx = await browser.newContext(DARK);
-  const page = await ctx.newPage();
-  await page.goto(BASE, { waitUntil: 'networkidle' });
+  const { ctx, page } = await newPage(browser, DARK);
   await loadSample(page);
   await page.getByTestId('btn-fix').click();
   await page.waitForTimeout(300);
@@ -109,9 +114,7 @@ const browser = await chromium.launch();
 
 // 6 — bilingual merge
 {
-  const ctx = await browser.newContext(DARK);
-  const page = await ctx.newPage();
-  await page.goto(BASE, { waitUntil: 'networkidle' });
+  const { ctx, page } = await newPage(browser, DARK);
   await loadSample(page);
   await page.getByTestId('btn-bilingual').click();
   await page.getByRole('tab', { name: '粘贴副轨文本' }).click();
@@ -122,11 +125,28 @@ const browser = await chromium.launch();
   await ctx.close();
 }
 
-// 7/8/9 — iPhone: list, editor, issues
+// 10/11 — the guided demo tour
 {
-  const ctx = await browser.newContext(PHONE);
-  const page = await ctx.newPage();
-  await page.goto(BASE, { waitUntil: 'networkidle' });
+  const { ctx, page } = await newPage(browser, DARK, { keepTour: true });
+  await page.getByTestId('demo-tour').waitFor();
+  const next = page.getByTestId('demo-tour-next');
+  await next.click(); // load the demo document
+  await page.waitForTimeout(400);
+  await next.click(); // step: the workbench
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `${OUT}/10-tour-workspace.png` });
+  await next.click(); // step: the issue panel
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: `${OUT}/11-tour-issues.png` });
+  await next.click(); // step: reversed timing repaired
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: `${OUT}/12-tour-fixed.png` });
+  await ctx.close();
+}
+
+// 8/9 — iPhone: list, editor, issues (tour suppressed)
+{
+  const { ctx, page } = await newPage(browser, PHONE);
   await loadSample(page);
   await page.waitForTimeout(400);
   await page.screenshot({ path: `${OUT}/07-iphone-list.png` });

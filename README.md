@@ -10,7 +10,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-38bdf8.svg)](./LICENSE)
 [![React](https://img.shields.io/badge/React-18-61dafb.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178c6.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-148%20unit%20%2B%2020%20e2e-34d399.svg)](#测试)
+[![Tests](https://img.shields.io/badge/tests-163%20unit%20%2B%2032%20e2e-34d399.svg)](#测试)
 
 **[▶ 在线使用](https://iiiiiiiiiiiiikk.github.io/subtitlefix/)** · **[作者 𝕏 @0xkillcoin](https://x.com/0xkillcoin)**
 
@@ -32,8 +32,39 @@ SubtitleFix 把这件事搬进浏览器：文件在你的设备上被解析，�
 
 ---
 
+## 🎬 不懂它干什么？先看 3 分钟演示
+
+打开 [在线站点](https://iiiiiiiiiiiiikk.github.io/subtitlefix/)，**首次访问会自动弹出**一份带引导的演示；也可以随时点工具栏的「**演示**」按钮重看。
+
+演示会载入一份我故意弄坏的示例字幕（[`examples/demo-walkthrough.srt`](./examples/demo-walkthrough.srt)），
+然后当着你的面一步步把它修好。这份示例的特别之处在于：**每条字幕的正文都在解释自己的毛病**。
+
+| 步骤 | 演示里发生什么 | 为什么重要 |
+| --- | --- | --- |
+| 1 | 载入 8 条示例字幕 | 你会看到 5 种真实世界里最常见的字幕故障 |
+| 2 | 底部「问题检查」列出全部问题 | 红色=错误（播放器会整条跳过），黄色=警告（可能显示异常） |
+| 3 | 自动修复「时间倒序」 | 第 3 条开始 8 秒、结束 5 秒 → 交换时间，**正文不动** |
+| 4 | 自动裁掉「时间重叠」 | 第 1、2 条叠了 0.8 秒 → 缩短上一条结束时间，**不删任何一条** |
+| 5 | 一键修复：重排编号 | 编号 1..6 后跳到 8 → 补齐为连续编号，错误清零 |
+| 6 | 打开「导出」看差异 | 导出前先列出改了多少条、有没有正文会被丢掉 |
+| 7 | 演示结束 | 提示你把**自己的** `.srt` / `.vtt` 拖进窗口 |
+
+<p align="center">
+  <img src="docs/screenshots/10-tour-workspace.jpg" width="49%" alt="演示：这是你的字幕工作台" />
+  <img src="docs/screenshots/11-tour-issues.jpg" width="49%" alt="演示：工具已经帮你找出问题" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/12-tour-fixed.jpg" width="70%" alt="演示：倒序的时间轴被自动修好" />
+</p>
+
+> 演示只会替换当前工作区的内容，**不会上传、不会删除你的文件**；如果你已经打开了自己的字幕，
+> 点「演示」时会先弹窗询问，取消即可继续编辑。演示过程全部走正常的编辑事务，`Ctrl+Z` 可以撤销。
+
+---
+
 ## 目录
 
+- [🎬 不懂它干什么？先看 3 分钟演示](#-不懂它干什么先看-3-分钟演示)
 - [功能](#功能)
 - [截图](#截图)
 - [支持格式与边界](#支持格式与边界)
@@ -52,6 +83,15 @@ SubtitleFix 把这件事搬进浏览器：文件在你的设备上被解析，�
 ---
 
 ## 功能
+
+### 上手与演示
+
+| 能力 | 说明 |
+| --- | --- |
+| 3 分钟引导演示 | 首次访问自动弹出；工具栏「演示」按钮可随时重看；每一步都会真的执行对应修复，并高亮正在讲的界面区域 |
+| 演示数据自带解释 | 示例字幕的每条正文都写着自身缺陷（"我把开始和结束写反了"），看完就懂每种故障长什么样 |
+| 不改你的东西 | 演示前若已打开自己的字幕，会先弹窗确认；演示只是普通编辑操作，`Ctrl+Z` 可撤销 |
+| 自带示例文件 | 落地页一键加载 5 种故障的字幕 / WebVTT / 双语示例，无需准备文件 |
 
 ### 导入与解析
 
@@ -129,6 +169,14 @@ SubtitleFix 把这件事搬进浏览器：文件在你的设备上被解析，�
 ### 双语合并
 
 ![双语合并](docs/screenshots/06-bilingual.jpg)
+
+### 引导演示（自动修复 + 高亮讲解）
+
+![演示：工作台讲解](docs/screenshots/10-tour-workspace.jpg)
+
+![演示：问题面板](docs/screenshots/11-tour-issues.jpg)
+
+![演示：倒序时间轴被修好](docs/screenshots/12-tour-fixed.jpg)
 
 ### iPhone（单列 + 标签切换）
 
@@ -243,7 +291,7 @@ npm run preview    # 本地预览生产构建
 
 ```
 npm run test
-# 7 test files, 148 tests passed
+# 8 test files, 163 tests passed
 ```
 
 覆盖范围：
@@ -255,17 +303,19 @@ npm run test
 | `tests/validate.test.ts` | 每条校验规则、严重级别排序、修复建议、序列化细节（BOM/CRLF/双语/负时间） |
 | `tests/ops.test.ts` | 平移（含跨零点、部分选择）、拆分、合并、删除、重排、排序、裁重叠、延时长、查找、替换预览、2 万条大文件 |
 | `tests/bilingual-diff.test.ts` | 三种配对策略、副轨不复用、阈值、未匹配处理、文档差异、文本差异 |
-| `tests/examples.test.ts` | 仓库内 4 个示例文件解析 + 双向往返不丢正文 + 双语配对 |
-| `tests/app.test.tsx` | 真 React 渲染：导入、编辑、修复、撤销、导出对话、错误提示、主题切换 |
+| `tests/demo.test.ts` | 演示文件与 `examples/demo-walkthrough.srt` 逐字节一致；演示里**每一种故障都真的被检测出来**；按演示脚本修复后错误清零且正文一字未改 |
+| `tests/examples.test.ts` | 仓库内 5 个示例文件解析 + 双向往返不丢正文 + 双语配对 |
+| `tests/app.test.tsx` | 真 React 渲染：导入、编辑、修复、撤销、导出对话、错误提示、主题切换、引导演示自动弹出与修复 |
 
 ### 端到端测试（Playwright）
 
 ```
 npm run e2e
-# 20 passed (desktop-chromium 10 + iphone-13 10)
+# 32 passed (desktop-chromium 16 + iphone-13 16)
 ```
 
-真实流程：粘贴/上传 → 逐条编辑 → 点问题修复 → 撤销/重做 → 查找跳转 → 双语合并 → 导出并**读取下载文件内容**断言（条数、正文、时间戳、`WEBVTT` 头）。iPhone 项目额外验证单列布局、标签切换、无横向溢出。
+真实流程：粘贴/上传 → 逐条编辑 → 点问题修复 → 撤销/重做 → 查找跳转 → 双语合并 → 导出并**读取下载文件内容**断言（条数、正文、时间戳、`WEBVTT` 头）。
+引导演示单独一个 spec：首次访问自动弹出 → 逐步修复 → 导出对话框接管 → 关闭后继续 → 再次打开/跳过都要正确；并验证「已有自己的文件时先确认再替换」。iPhone 项目额外验证单列布局、标签切换、无横向溢出。
 
 ### 额外的自动化验证脚本
 
@@ -290,13 +340,14 @@ node scripts/verify-production.mjs https://iiiiiiiiiiiiikk.github.io/subtitlefix
 
 ```
 requests after initial load: 0
-localStorage keys: [ 'subtitlefix.theme' ]
+localStorage keys: [ 'subtitlefix.theme', 'subtitlefix.tour.seen.v1' ]
 sessionStorage keys: []
 cookies: (none)
 PASS: zero network requests after the initial load.
 ```
 
-即：页面加载完成后，导入、编辑、修复、查找、导出全过程**一次网络请求都没有**。唯一写入的本地存储是主题偏好。
+即：页面加载完成后，导入、编辑、修复、查找、导出全过程**一次网络请求都没有**。
+本地存储只有两项：主题偏好，以及「演示已看过」的标记（这样不会每次打开都弹演示）。字幕内容从不落盘。
 
 ---
 
@@ -354,7 +405,7 @@ PASS: zero network requests after the initial load.
 
 - **零上传**：没有后端接口，没有第三方 CDN（字体使用系统字体栈），没有分析脚本。
 - **零凭据**：项目不需要任何 API Key、Token 或账号；仓库里也没有任何密钥。
-- **本地存储**：只保存主题偏好（`subtitlefix.theme`），不保存字幕内容。
+- **本地存储**：只保存主题偏好（`subtitlefix.theme`）和「演示已看过」标记（`subtitlefix.tour.seen.v1`），**不保存任何字幕内容**。
 - **输入处理**：所有解析都在内存中进行，不使用 `eval` / `innerHTML` 注入用户文本；React 默认转义，正文按纯文本渲染。
 - **文件写入**：导出通过 `Blob` + `URL.createObjectURL` 触发浏览器下载，不经过任何服务器。
 - **无 SSRF 面**：应用不发起任何出站请求，因此不存在 SSRF 攻击面。
@@ -370,12 +421,13 @@ PASS: zero network requests after the initial load.
 
 | 文件 | 用途 |
 | --- | --- |
-| `broken-sample.srt` | 重叠、逆序、空字幕、点号时间戳、编号跳号、缺空行、ASS 标签 —— 一次看到全部检测能力 |
+| `demo-walkthrough.srt` | **演示用**：8 条字幕、5 种故障，每条正文都在解释自己的毛病。与引导演示里的文件逐字节一致（`tests/demo.test.ts` 会校验） |
+| `broken-sample.srt` | 更"脏"的压力测试：重叠、逆序、空字幕、点号时间戳、编号跳号、缺空行、ASS 标签 |
 | `clean-sample.vtt` | `NOTE` / `STYLE` / `REGION` 块、cue 设置、命名标识、HTML 实体、emoji |
 | `bilingual-en.srt` | 双语合并的主轨 |
 | `bilingual-zh.srt` | 双语合并的副轨（时间略有偏移，用来演示"按重叠配对"） |
 
-应用内也内置了同样的示例（落地页的「试试示例」卡片）。
+应用内也内置了同样的示例（落地页的「直接试这些示例」卡片 + 工具栏「演示」按钮）。
 
 ---
 
