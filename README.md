@@ -331,7 +331,7 @@ npm run e2e
 
 ```bash
 node scripts/verify-production.mjs https://iiiiiiiiiiiiikk.github.io/subtitlefix/
-# 30/30 checks passed
+# 35/35 checks passed
 ```
 
 ### 隐私验证
